@@ -15,7 +15,7 @@ tapan/HelloWorldDistelli:
   #
 
   Env:
-    - CLASSPATH: 'target/*:lib/*'
+    - CLASSPATH = $(find lib -name '*.jar' | xargs echo | tr ' ' ':')
     #
     # Set the JAVA_HOME below for the destination
     # deployment server JRE directory.
@@ -27,14 +27,17 @@ tapan/HelloWorldDistelli:
     # ARGS: "$PORT"
 
   Build:
-    - mvn package
+    - mkdir -p target/classes
+    - javac -cp $CLASSPATH src/com/example/app/*.java -d target/classes
+    - jar -cf target/SimpleJavaApp.jar -C target/classes/ .
+    # mvn package
 
   # Exec:
   # - exec $JAVA_HOME/bin/java -cp $CLASSPATH $JVM_ARGS HelloWorldDistelli $ARGS
 
   PkgInclude:
     - target/*.jar
-    - lib/*.jar
+    # lib/*.jar
 
 
   PostInstall:
