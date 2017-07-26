@@ -22,13 +22,30 @@ tapan/HelloWorldDistelli:
     #
     - JAVA_HOME: "/usr/lib/jvm/java-8-oracle/jre"
     #
-    - JVM_ARGS: '"-Duser.timezone=UTC -Xmx128M -Xms128M"'
+    # JVM_ARGS: '"-Duser.timezone=UTC -Xmx128M -Xms128M"'
     - PORT: "8001"
-    - ARGS: "$PORT"
+    # ARGS: "$PORT"
 
-  Exec:
-    - exec $JAVA_HOME/bin/java -cp $CLASSPATH $JVM_ARGS HelloWorldDistelli $ARGS
+  Build:
+    - mvn package
+
+  # Exec:
+  # - exec $JAVA_HOME/bin/java -cp $CLASSPATH $JVM_ARGS HelloWorldDistelli $ARGS
 
   PkgInclude:
     - target/*.jar
     - lib/*.jar
+
+
+  PostInstall:
+    - echo "PostStart"
+    - publicip=$(curl -s ident.me)
+    - echo "Public IP $publicip"
+    #'sudo cp -f ./target/*.war $CATALINA_HOME/webapps/'
+    # By default tomcat detects if the war file has changed and
+    # automatically extracts it. If restart is required you can
+    # restart tomcat with the command below.
+    # Restart Tomcat - You might have to use a different command
+    # depending on how tomcat is installed
+    # sudo service tomcat8 restart
+    - 'echo "You can validate the install by pointing your browser at http://$publicip:$PORT/HelloWorldDistelli"'
