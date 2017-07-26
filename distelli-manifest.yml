@@ -1,20 +1,6 @@
-tapan/HelloWorldDistelli:
-  # This Basic Distelli Manifest assumes the following
-  # has been provisioned on the destination deploy server:
-  #
-  # OS: Ubuntu
-  # Installed Packages:
-  #   Java JRE >= 1.7   [sudo apt-get install default-jre]
-  #
-  # Set the JAVA_HOME (below) for your JRE install directory
-  #
-  # This also requires that the Java JDK be installed on
-  # the development server to compile the java code.
-  #
-  # There is a build.sh script to compile the code for you.
-  #
+ tapan/HelloWorldDistelli:
 
-  Env:
+Env:
     - CLASSPATH = $(find lib -name '*.jar' | xargs echo | tr ' ' ':')
     #
     # Set the JAVA_HOME below for the destination
@@ -26,21 +12,43 @@ tapan/HelloWorldDistelli:
     - PORT: "8001"
     # ARGS: "$PORT"
 
-  Build:
-    - mkdir -p target/classes
-    - javac -cp $CLASSPATH src/com/example/app/*.java -d target/classes
-    - jar -cf target/SimpleJavaApp.jar -C target/classes/ .
-    # mvn package
 
-  # Exec:
-  # - exec $JAVA_HOME/bin/java -cp $CLASSPATH $JVM_ARGS HelloWorldDistelli $ARGS
+PreBuild:
+    - sudo add-apt-repository ppa:webupd8team/java
+    - sudo apt-get -y update
+    - echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+    - echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
+    - sudo apt-get -y install oracle-java7-installer
+    - sudo apt-get -y install oracle-java7-set-default
+    - sudo apt-get -y install ant
+    - sudo apt-get -y install maven
+    - sudo apt-get -y install gradle
 
-  PkgInclude:
+Build:
+    - if [[ -f gradlew ]]; then
+    -   ./gradlew assemble
+    - elif [[ -f build.gradle ]]; then
+    -   gradle assemble
+    - elif [[ -f pom.xml ]]; then
+    -   mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+    - fi
+
+    - if [[ -f gradlew ]]; then
+    -   ./gradlew check
+    - elif [[ -f build.gradle ]]; then
+    -   gradle check
+    - elif [[ -f pom.xml ]]; then
+    -   mvn test -B
+    - else
+    -   ant test
+    - fi
+
+PkgInclude:
     - target/*.jar
     # lib/*.jar
 
 
-  PostInstall:
+PostInstall:
     - echo "PostStart"
     - publicip=$(curl -s ident.me)
     - echo "Public IP $publicip"
@@ -52,3 +60,4 @@ tapan/HelloWorldDistelli:
     # depending on how tomcat is installed
     # sudo service tomcat8 restart
     - 'echo "You can validate the install by pointing your browser at http://$publicip:$PORT/HelloWorldDistelli"'
+
